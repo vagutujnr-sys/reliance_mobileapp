@@ -42,28 +42,53 @@ export async function getDashboard(profileId: string) {
 export async function getFleet(profileId: string): Promise<FleetUnit[]> {
   const { repo } = await staff(profileId);
   const locations = await repo.latestFleetLocations();
+  const assignments = await repo.listAssignments();
+  const checkpoints = await repo.listCheckpoints();
   const units: FleetUnit[] = [];
   for (const location of locations) {
     const trip = await repo.getTrip(location.tripId);
     const vehicle = trip ? await repo.getVehicle(trip.vehicleId) : null;
-    const driver = await repo.getDriver(location.driverId);
+    const assignment = assignments.find((item) => item.tripId === location.tripId && item.active);
+    const driver = assignment ? await repo.getDriver(assignment.driverId) : null;
     if (!trip || !vehicle || !driver) continue;
     if (!["in_transit", "at_checkpoint", "delayed", "collected"].includes(vehicle.status) && trip.status !== "in_transit") continue;
     const age = Date.now() - new Date(location.recordedAt).getTime();
+    const driverProfile = driver.profileId ? await repo.getProfile(driver.profileId) : null;
+    const tripCheckpoints = trip.checkpointIds.flatMap((checkpointId) => {
+      const checkpoint = checkpoints.find((item) => item.id === checkpointId);
+      return checkpoint ? [{ latitude: checkpoint.latitude, longitude: checkpoint.longitude, label: checkpoint.name }] : [];
+    });
     units.push({
       tripId: trip.id,
       vehicleId: vehicle.id,
       title: `${vehicle.make} ${vehicle.model}`,
       registration: vehicle.registration,
+      referenceNumber: vehicle.referenceNumber,
       imageUrl: vehicle.imageUrl,
+      origin: trip.origin,
       driverName: driver.fullName,
+      driverId: driver.id,
+      driverCode: driver.driverCode,
+      driverPhone: driver.phone,
+      driverAvatarUrl: driverProfile?.avatarUrl ?? null,
+      driverStatus: driver.accountStatus,
+      driverLastActiveAt: driver.lastActiveAt,
       status: vehicle.status,
       statusLabel: vehicleLabel(vehicle.status),
       destination: trip.destination,
+      eta: trip.eta,
+      distanceKm: trip.distanceKm,
       latitude: location.latitude,
       longitude: location.longitude,
+      heading: location.heading,
       speedKmh: location.speedKmh,
+      recordedAt: location.recordedAt,
       updatedLabel: formatDateTime(location.recordedAt),
+      routePoints: [
+        { latitude: trip.originLat, longitude: trip.originLng, label: trip.origin },
+        ...tripCheckpoints,
+        { latitude: trip.destinationLat, longitude: trip.destinationLng, label: trip.destination },
+      ],
       delayed: vehicle.status === "delayed" || age > 60 * 60 * 1000,
       atCheckpoint: vehicle.status === "at_checkpoint",
     });

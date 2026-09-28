@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { adminAddDriverPayment, adminChatMode, adminCreateClient, adminCreateDriver, adminCreateInvoice, adminCreateStaff, adminCreateTrip, adminIssuePin, adminSaveSettings, adminSaveVehicle, adminSetAccess, adminVerifyPayment } from "@/lib/actions/app";
 import type { AccountStatus, VehicleStatus } from "@/lib/data/types";
+import { AdminFormModal, ConfirmDialog } from "@/components/admin/AdminModal";
 
 export function Notice({ text }: { text: string }) {
   if (!text) return null;
@@ -11,63 +12,36 @@ export function Notice({ text }: { text: string }) {
 }
 
 export function ClientForm() {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  const [pending, setPending] = useState(false);
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setPending(true);
-    const result = await adminCreateClient({
+  return (
+    <AdminFormModal title="Add Client" triggerLabel="Add Client" submitLabel="Save Client" onSubmit={(form) => adminCreateClient({
       fullName: String(form.get("fullName") || ""),
       phone: String(form.get("phone") || ""),
       email: String(form.get("email") || ""),
       address: String(form.get("address") || ""),
       appAccess: form.get("appAccess") === "on",
-    });
-    setPending(false);
-    if (!result.ok) return setMessage(result.error);
-    setMessage(result.data?.pin ? `Client created. Initial PIN: ${result.data.pin}` : "Client record created without app access.");
-    router.refresh();
-  }
-  return (
-    <form onSubmit={submit} className="grid gap-2 rounded-3xl bg-white p-4 md:grid-cols-2">
-      <input name="fullName" required placeholder="Full name" className="h-11 rounded-xl border border-line px-3" />
-      <input name="phone" required placeholder="Phone" className="h-11 rounded-xl border border-line px-3" />
-      <input name="email" placeholder="Email" className="h-11 rounded-xl border border-line px-3" />
-      <input name="address" placeholder="Address" className="h-11 rounded-xl border border-line px-3" />
-      <label className="flex items-center gap-2 text-sm"><input name="appAccess" type="checkbox" /> Activate app access and issue PIN</label>
-      <button disabled={pending} className="h-11 rounded-full bg-brand font-semibold text-white">{pending ? "Saving..." : "Add Client"}</button>
-      <Notice text={message} />
-    </form>
+    })} successMessage={(data) => (data as { pin?: string | null } | undefined)?.pin ? `Client created. Initial PIN: ${(data as { pin: string }).pin}` : "Client record created."}>
+      <input name="fullName" required placeholder="Full name" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="phone" required placeholder="Phone" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="email" type="email" placeholder="Email" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="address" placeholder="Address" className="h-10 rounded border border-line px-3 text-sm" />
+      <label className="flex items-center gap-2 text-sm sm:col-span-2"><input name="appAccess" type="checkbox" /> Activate app access and issue PIN</label>
+    </AdminFormModal>
   );
 }
 
 export function DriverForm() {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const result = await adminCreateDriver({
+  return (
+    <AdminFormModal title="Add Driver" triggerLabel="Add Driver" submitLabel="Save Driver" onSubmit={(form) => adminCreateDriver({
       fullName: String(form.get("fullName") || ""),
       phone: String(form.get("phone") || ""),
       licenceNumber: String(form.get("licenceNumber") || ""),
       nationalId: String(form.get("nationalId") || ""),
-    });
-    if (!result.ok || !result.data) return setMessage(result.ok ? "Could not create the driver." : result.error);
-    setMessage(`Driver ${result.data.code} created. Initial PIN: ${result.data.pin}`);
-    router.refresh();
-  }
-  return (
-    <form onSubmit={submit} className="grid gap-2 rounded-3xl bg-white p-4 md:grid-cols-2">
-      <input name="fullName" required placeholder="Full name" className="h-11 rounded-xl border border-line px-3" />
-      <input name="phone" required placeholder="Phone" className="h-11 rounded-xl border border-line px-3" />
-      <input name="licenceNumber" placeholder="Licence number" className="h-11 rounded-xl border border-line px-3" />
-      <input name="nationalId" placeholder="National ID" className="h-11 rounded-xl border border-line px-3" />
-      <button className="h-11 rounded-full bg-brand font-semibold text-white">Add Driver</button>
-      <Notice text={message} />
-    </form>
+    })} successMessage={(data) => { const result = data as { code: string; pin: string }; return `Driver ${result.code} created. Initial PIN: ${result.pin}`; }}>
+      <input name="fullName" required placeholder="Full name" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="phone" required placeholder="Phone" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="licenceNumber" placeholder="Licence number" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="nationalId" placeholder="National ID" className="h-10 rounded border border-line px-3 text-sm" />
+    </AdminFormModal>
   );
 }
 
@@ -95,12 +69,8 @@ export function AccessButtons({ kind, id }: { kind: "client" | "driver"; id: str
 }
 
 export function VehicleForm({ owners }: { owners: { id: string; name: string }[] }) {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const result = await adminSaveVehicle({
+  return (
+    <AdminFormModal title="Add Vehicle" triggerLabel="Add Vehicle" submitLabel="Save Vehicle" onSubmit={(form) => adminSaveVehicle({
       ownerId: String(form.get("ownerId") || ""),
       make: String(form.get("make") || ""),
       model: String(form.get("model") || ""),
@@ -116,126 +86,87 @@ export function VehicleForm({ owners }: { owners: { id: string; name: string }[]
       insuranceProvider: String(form.get("insuranceProvider") || ""),
       insuranceExpiry: String(form.get("insuranceExpiry") || ""),
       status: String(form.get("status") || "awaiting_shipment") as VehicleStatus,
-    });
-    setMessage(result.ok ? "Vehicle saved." : result.error);
-    if (result.ok) router.refresh();
-  }
-  return (
-    <form onSubmit={submit} className="grid gap-2 rounded-3xl bg-white p-4 md:grid-cols-3">
-      <select name="ownerId" className="h-11 rounded-xl border border-line px-3">{owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.name}</option>)}</select>
-      <input name="make" required placeholder="Make" className="h-11 rounded-xl border border-line px-3" />
-      <input name="model" required placeholder="Model" className="h-11 rounded-xl border border-line px-3" />
-      <input name="year" type="number" defaultValue={2024} className="h-11 rounded-xl border border-line px-3" />
-      <input name="colour" placeholder="Colour" className="h-11 rounded-xl border border-line px-3" />
-      <input name="registration" required placeholder="Registration" className="h-11 rounded-xl border border-line px-3" />
-      <input name="vin" placeholder="VIN / chassis" className="h-11 rounded-xl border border-line px-3" />
-      <input name="engineNumber" placeholder="Engine number" className="h-11 rounded-xl border border-line px-3" />
-      <input name="origin" placeholder="Origin" className="h-11 rounded-xl border border-line px-3" />
-      <input name="destination" placeholder="Destination" className="h-11 rounded-xl border border-line px-3" />
-      <input name="shippingReference" placeholder="Shipping reference" className="h-11 rounded-xl border border-line px-3" />
-      <select name="status" className="h-11 rounded-xl border border-line px-3">
+    })}>
+      <select name="ownerId" className="h-10 rounded border border-line px-3 text-sm">{owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.name}</option>)}</select>
+      <input name="make" required placeholder="Make" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="model" required placeholder="Model" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="year" type="number" defaultValue={2024} className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="colour" placeholder="Colour" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="registration" required placeholder="Registration" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="vin" placeholder="VIN / chassis" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="engineNumber" placeholder="Engine number" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="origin" placeholder="Origin" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="destination" placeholder="Destination" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="shippingReference" placeholder="Shipping reference" className="h-10 rounded border border-line px-3 text-sm" />
+      <select name="status" className="h-10 rounded border border-line px-3 text-sm">
         {["awaiting_shipment", "shipping", "ready_for_collection", "assigned", "collected", "in_transit", "at_checkpoint", "delayed", "arrived", "delivered"].map((status) => <option key={status}>{status}</option>)}
       </select>
-      <select name="insuranceStatus" className="h-11 rounded-xl border border-line px-3"><option value="insured">insured</option><option value="not_insured">not insured</option></select>
-      <input name="insuranceProvider" placeholder="Insurer" className="h-11 rounded-xl border border-line px-3" />
-      <input name="insuranceExpiry" type="date" className="h-11 rounded-xl border border-line px-3" />
-      <button className="h-11 rounded-full bg-brand font-semibold text-white">Add Vehicle</button>
-      <Notice text={message} />
-    </form>
+      <select name="insuranceStatus" className="h-10 rounded border border-line px-3 text-sm"><option value="insured">Insured</option><option value="not_insured">Not insured</option></select>
+      <input name="insuranceProvider" placeholder="Insurer" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="insuranceExpiry" type="date" className="h-10 rounded border border-line px-3 text-sm" />
+    </AdminFormModal>
   );
 }
 
 export function TripForm({ vehicles, drivers }: { vehicles: { id: string; label: string }[]; drivers: { id: string; name: string }[] }) {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const result = await adminCreateTrip({
+  return (
+    <AdminFormModal title="Create Trip" triggerLabel="Create Trip" submitLabel="Create Trip" onSubmit={(form) => adminCreateTrip({
       vehicleId: String(form.get("vehicleId") || ""),
       driverId: String(form.get("driverId") || ""),
       origin: String(form.get("origin") || ""),
       destination: String(form.get("destination") || ""),
       eta: String(form.get("eta") || ""),
       distanceKm: Number(form.get("distanceKm") || 0),
-    });
-    setMessage(result.ok ? "Trip assigned." : result.error);
-    if (result.ok) router.refresh();
-  }
-  return (
-    <form onSubmit={submit} className="grid gap-2 rounded-3xl bg-white p-4 md:grid-cols-3">
-      <select name="vehicleId" className="h-11 rounded-xl border border-line px-3">{vehicles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-      <select name="driverId" className="h-11 rounded-xl border border-line px-3">{drivers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-      <input name="origin" placeholder="Origin" className="h-11 rounded-xl border border-line px-3" />
-      <input name="destination" placeholder="Destination" className="h-11 rounded-xl border border-line px-3" />
-      <input name="eta" type="datetime-local" className="h-11 rounded-xl border border-line px-3" />
-      <input name="distanceKm" type="number" placeholder="Distance km" className="h-11 rounded-xl border border-line px-3" />
-      <button className="h-11 rounded-full bg-brand font-semibold text-white">Create Trip</button>
-      <Notice text={message} />
-    </form>
+    })}>
+      <select name="vehicleId" className="h-10 rounded border border-line px-3 text-sm">{vehicles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+      <select name="driverId" className="h-10 rounded border border-line px-3 text-sm">{drivers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+      <input name="origin" placeholder="Origin" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="destination" placeholder="Destination" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="eta" type="datetime-local" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="distanceKm" type="number" placeholder="Distance km" className="h-10 rounded border border-line px-3 text-sm" />
+    </AdminFormModal>
   );
 }
 
 export function InvoiceForm({ clients, vehicles }: { clients: { id: string; name: string }[]; vehicles: { id: string; label: string }[] }) {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const result = await adminCreateInvoice({
+  return (
+    <AdminFormModal title="Create Invoice" triggerLabel="Create Invoice" submitLabel="Save Invoice" onSubmit={(form) => adminCreateInvoice({
       clientId: String(form.get("clientId") || ""),
       vehicleId: String(form.get("vehicleId") || ""),
       description: String(form.get("description") || ""),
       amount: Number(form.get("amount") || 0),
       dueOn: String(form.get("dueOn") || ""),
       notes: String(form.get("notes") || ""),
-    });
-    setMessage(result.ok ? "Invoice created." : result.error);
-    if (result.ok) router.refresh();
-  }
-  return (
-    <form onSubmit={submit} className="grid gap-2 rounded-3xl bg-white p-4 md:grid-cols-3">
-      <select name="clientId" className="h-11 rounded-xl border border-line px-3">{clients.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-      <select name="vehicleId" className="h-11 rounded-xl border border-line px-3">{vehicles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-      <input name="description" required placeholder="Item description" className="h-11 rounded-xl border border-line px-3" />
-      <input name="amount" type="number" required placeholder="Amount" className="h-11 rounded-xl border border-line px-3" />
-      <input name="dueOn" type="date" className="h-11 rounded-xl border border-line px-3" />
-      <input name="notes" placeholder="Notes" className="h-11 rounded-xl border border-line px-3" />
-      <button className="h-11 rounded-full bg-brand font-semibold text-white">Create Invoice</button>
-      <Notice text={message} />
-    </form>
+    })}>
+      <select name="clientId" className="h-10 rounded border border-line px-3 text-sm">{clients.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+      <select name="vehicleId" className="h-10 rounded border border-line px-3 text-sm">{vehicles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+      <input name="description" required placeholder="Item description" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="amount" type="number" required placeholder="Amount" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="dueOn" type="date" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="notes" placeholder="Notes" className="h-10 rounded border border-line px-3 text-sm" />
+    </AdminFormModal>
   );
 }
 
 export function VerifyButton({ id }: { id: string }) {
-  const router = useRouter();
-  return <button onClick={async () => { await adminVerifyPayment(id, true); router.refresh(); }} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Verify & receipt</button>;
+  return <ConfirmDialog title="Verify Payment?" description="This payment will be marked as verified and a receipt will be issued." confirmLabel="Verify Payment" onConfirm={() => adminVerifyPayment(id, true)}>
+    <button type="button" className="bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Verify & receipt</button>
+  </ConfirmDialog>;
 }
 
 export function DriverPayForm({ drivers }: { drivers: { id: string; name: string }[] }) {
-  const router = useRouter();
-  const [message, setMessage] = useState("");
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const result = await adminAddDriverPayment({
+  return (
+    <AdminFormModal title="Create Driver Payment" triggerLabel="Create Driver Payment" submitLabel="Record Payment" onSubmit={(form) => adminAddDriverPayment({
       driverId: String(form.get("driverId") || ""),
       route: String(form.get("route") || ""),
       amount: Number(form.get("amount") || 0),
       status: String(form.get("status") || "pending") as "pending" | "approved" | "paid",
-    });
-    setMessage(result.ok ? "Driver payment recorded." : result.error);
-    if (result.ok) router.refresh();
-  }
-  return (
-    <form onSubmit={submit} className="mt-4 grid gap-2 rounded-3xl bg-white p-4 md:grid-cols-4">
-      <select name="driverId" className="h-11 rounded-xl border border-line px-3">{drivers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-      <input name="route" placeholder="Route" className="h-11 rounded-xl border border-line px-3" />
-      <input name="amount" type="number" placeholder="Amount" className="h-11 rounded-xl border border-line px-3" />
-      <select name="status" className="h-11 rounded-xl border border-line px-3"><option>pending</option><option>approved</option><option>paid</option></select>
-      <button className="h-11 rounded-full bg-ink font-semibold text-white">Add driver payment</button>
-      <Notice text={message} />
-    </form>
+    })}>
+      <select name="driverId" className="h-10 rounded border border-line px-3 text-sm">{drivers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+      <input name="route" placeholder="Route" className="h-10 rounded border border-line px-3 text-sm" />
+      <input name="amount" type="number" placeholder="Amount" className="h-10 rounded border border-line px-3 text-sm" />
+      <select name="status" className="h-10 rounded border border-line px-3 text-sm"><option>pending</option><option>approved</option><option>paid</option></select>
+    </AdminFormModal>
   );
 }
 

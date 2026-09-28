@@ -8,8 +8,7 @@ export default async function LivePage() {
   const units = await getFleet(profile.id);
   return (
     <div>
-      <h1 className="text-3xl font-bold">Live Vehicle Tracking</h1>
-      <p className="mb-4 text-muted">Real-time location of active vehicles. Clients never see this feed.</p>
+      <h1 className="mb-3 text-xl font-semibold">Live fleet tracking</h1>
       <FleetBoard units={units} token={mapboxToken()} />
     </div>
   );

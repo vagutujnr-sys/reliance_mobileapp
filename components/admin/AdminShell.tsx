@@ -39,7 +39,7 @@ export function AdminShell({ name, children }: { name: string; children: React.R
           const active = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
-            <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={cn("flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm", active ? "bg-brand font-semibold" : "text-white/75 hover:bg-white/5")}>
+            <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={cn("flex items-center gap-3 rounded px-3 py-2 text-sm", active ? "bg-brand font-semibold" : "text-white/75 hover:bg-white/5")}>
               <Icon className="h-4 w-4" /> {item.label}
             </Link>
           );
@@ -53,13 +53,13 @@ export function AdminShell({ name, children }: { name: string; children: React.R
     </div>
   );
   return (
-    <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[250px_1fr]">
-      <aside className="hidden lg:block">{nav}</aside>
-      {open ? <div className="fixed inset-0 z-40 lg:hidden"><button className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} /><div className="relative h-full w-[250px]">{nav}</div></div> : null}
-      <div>
-        <button type="button" className="m-3 grid h-10 w-10 place-items-center rounded-xl bg-white lg:hidden" onClick={() => setOpen(true)}>{open ? <X /> : <Menu />}</button>
+    <div className="h-dvh overflow-hidden bg-canvas">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[250px] lg:block">{nav}</aside>
+      {open ? <div className="fixed inset-0 z-40 lg:hidden"><button aria-label="Close navigation" className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} /><div className="relative h-full w-[250px]">{nav}</div></div> : null}
+      <main className="h-dvh overflow-y-auto lg:ml-[250px]">
+        <button type="button" aria-label="Open navigation" className="m-3 grid h-10 w-10 place-items-center rounded border border-line bg-white lg:hidden" onClick={() => setOpen(true)}>{open ? <X /> : <Menu />}</button>
         <div className="px-4 pb-10 lg:px-8 lg:py-6">{children}</div>
-      </div>
+      </main>
     </div>
   );
 }
