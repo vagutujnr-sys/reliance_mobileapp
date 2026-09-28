@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { mobileLogin } from "@/lib/actions/app";
 
-export function LoginForm({ demo }: { demo: boolean }) {
+export function LoginForm() {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
@@ -79,14 +79,6 @@ export function LoginForm({ demo }: { demo: boolean }) {
           {pending ? "Signing in..." : "Login"}
         </button>
       </form>
-      {demo ? (
-        <div className="mt-8 rounded-3xl bg-canvas p-4 text-sm text-zinc-600">
-          <p className="font-semibold text-ink">Development access</p>
-          <p className="mt-2">Driver Tapiwa Moyo · 771000101 · PIN 2580</p>
-          <p>Client Tendai Mafidi · 771000202 · PIN 3691</p>
-          <p>Client Rudo Ndlovu · 771000303 · PIN 1470</p>
-        </div>
-      ) : null}
     </main>
   );
 }

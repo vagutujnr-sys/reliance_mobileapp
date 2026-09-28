@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabaseConfig } from "@/lib/config";
 import type { Repo } from "@/lib/data/types";
 
 type DbRow = Record<string, unknown>;
@@ -36,11 +37,7 @@ let supabase: SupabaseClient | undefined;
 function client() {
   if (supabase) return supabase;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error("Supabase is required. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
-  }
+  const { url, serviceRoleKey } = supabaseConfig();
 
   supabase = createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },

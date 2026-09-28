@@ -1,11 +1,9 @@
 import "server-only";
-import { isRemote } from "@/lib/config";
 import type { Activity, AppNotification, Profile, Repo } from "@/lib/data/types";
 
 export class ServiceError extends Error {}
 
 export async function db(): Promise<Repo> {
-  isRemote();
   const { supabaseRepo } = await import("@/lib/data/supabase-repo");
   return supabaseRepo;
 }

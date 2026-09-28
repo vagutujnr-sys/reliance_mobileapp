@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { adminLogin } from "@/lib/actions/app";
 
-export function AdminLoginForm({ demo, error }: { demo: boolean; error?: string }) {
+export function AdminLoginForm({ error }: { error?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +43,6 @@ export function AdminLoginForm({ demo, error }: { demo: boolean; error?: string 
         <button disabled={pending} className="mt-6 h-12 w-full rounded-full bg-brand font-semibold text-white disabled:opacity-60">
           {pending ? "Signing in..." : "Login"}
         </button>
-        {demo ? <p className="mt-4 text-sm text-muted">Development: admin@reliancemobility.co.zw · Reliance#2026</p> : null}
       </form>
     </main>
   );
