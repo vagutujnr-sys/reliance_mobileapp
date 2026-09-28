@@ -69,12 +69,14 @@ export function FleetBoard({ units: initialUnits, token }: { units: FleetUnit[];
     if (filter === "delayed") return unit.delayed;
     return true;
   }), [units, query, filter]);
-  const current = visible.find((unit) => unit.tripId === selected) ?? visible[0] ?? null;
+  const current = selected ? visible.find((unit) => unit.tripId === selected) ?? visible[0] ?? null : null;
 
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2 border-y border-line bg-white px-3 py-2">
-        <label className="relative min-w-52 flex-1 sm:max-w-sm">
+    <div className="relative h-full min-h-[480px] w-full overflow-hidden bg-[#eef1f2]">
+      <FleetMap token={token} units={visible} selectedTripId={current?.tripId ?? null} onSelect={setSelected} />
+      <div className="absolute left-14 right-3 top-3 z-10 flex flex-wrap items-center gap-2 border border-line bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm sm:left-3">
+        <h1 className="mr-2 text-sm font-semibold">Live fleet</h1>
+        <label className="relative min-w-40 flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search vehicle, driver or route" className="h-9 w-full border border-line bg-white pl-9 pr-3 text-sm outline-none focus:border-brand" />
         </label>
@@ -85,8 +87,7 @@ export function FleetBoard({ units: initialUnits, token }: { units: FleetUnit[];
         </div>
         <span className="ml-auto flex items-center gap-2 text-xs text-muted"><span className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-600" : "bg-amber-500"}`} />{connected ? "Live feed" : "Reconnecting"}</span>
       </div>
-      <div className="grid min-h-[min(680px,calc(100dvh-190px))] gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="flex min-h-0 flex-col border border-line bg-white">
+      <aside className="absolute bottom-3 left-3 top-[68px] z-10 hidden w-[270px] flex-col border border-line bg-white/95 shadow-sm backdrop-blur-sm sm:flex">
           <div className="flex items-center justify-between border-b border-line px-3 py-2.5">
             <h2 className="text-sm font-semibold">Active fleet</h2><span className="text-xs text-muted">{visible.length} units</span>
           </div>
@@ -102,13 +103,9 @@ export function FleetBoard({ units: initialUnits, token }: { units: FleetUnit[];
             {!visible.length ? <p className="px-3 py-5 text-sm text-muted">No vehicles match this view.</p> : null}
           </div>
           <div className="border-t border-line px-3 py-2 text-xs text-muted">{units.length} tracked · positions update live</div>
-        </aside>
-        <section className="relative min-h-[min(680px,calc(100dvh-190px))] overflow-hidden border border-line bg-[#e8edf0]">
-          <FleetMap token={token} units={visible} selectedTripId={current?.tripId ?? null} onSelect={setSelected} />
-          {current ? <VehicleTrackingDrawer unit={current} onClose={() => setSelected(null)} /> : null}
-          {!visible.length ? <div className="pointer-events-none absolute left-3 top-3 border border-line bg-white/95 px-3 py-2 text-xs text-muted">Southern Africa operations view</div> : null}
-        </section>
-      </div>
+      </aside>
+      {current ? <VehicleTrackingDrawer unit={current} onClose={() => setSelected(null)} /> : null}
+      {!visible.length ? <div className="absolute bottom-4 left-4 z-10 border border-line bg-white/95 px-3 py-2 text-xs text-muted">Southern Africa operations view</div> : null}
     </div>
   );
 }

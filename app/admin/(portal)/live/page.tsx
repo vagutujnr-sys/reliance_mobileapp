@@ -6,10 +6,5 @@ import { FleetBoard } from "@/components/maps/FleetBoard";
 export default async function LivePage() {
   const profile = await requireProfile(["super_admin", "admin"]);
   const units = await getFleet(profile.id);
-  return (
-    <div>
-      <h1 className="mb-3 text-xl font-semibold">Live fleet tracking</h1>
-      <FleetBoard units={units} token={mapboxToken()} />
-    </div>
-  );
+  return <FleetBoard units={units} token={mapboxToken()} />;
 }

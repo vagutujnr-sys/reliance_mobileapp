@@ -23,7 +23,7 @@ function DetailRows({ values }: { values: [string, string][] }) {
 
 export function VehicleTrackingDrawer({ unit, onClose }: { unit: FleetUnit; onClose: () => void }) {
   return (
-    <aside aria-label="Vehicle tracking details" className="absolute inset-y-2 right-2 z-10 flex w-[min(360px,calc(100%-1rem))] flex-col border border-line bg-white shadow-xl">
+    <aside aria-label="Vehicle tracking details" className="absolute bottom-3 right-3 top-[68px] z-20 flex w-[min(360px,calc(100%-1.5rem))] flex-col border border-line bg-white shadow-xl">
       <header className="flex items-center justify-between border-b border-line px-4 py-3">
         <h2 className="text-sm font-semibold">Tracking details</h2>
         <button type="button" aria-label="Close vehicle details" onClick={onClose} className="grid h-8 w-8 place-items-center text-muted hover:bg-canvas"><X className="h-4 w-4" /></button>

@@ -19,6 +19,7 @@ export function FleetMap({ token, units, selectedTripId, onSelect }: {
   const checkpointMarkersRef = useRef<MapboxMarker[]>([]);
   const didFitRef = useRef(false);
   const [loaded, setLoaded] = useState(false);
+  const selectedRoutePoints = units.find((unit) => unit.tripId === selectedTripId)?.routePoints;
 
   useEffect(() => {
     if (!token || !containerRef.current) return;
@@ -33,7 +34,7 @@ export function FleetMap({ token, units, selectedTripId, onSelect }: {
       mapboxgl.accessToken = token;
       map = new mapboxgl.Map({
         container: containerRef.current,
-        style: "mapbox://styles/mapbox/streets-v12",
+        style: "mapbox://styles/mapbox/light-v11",
         center: [30.2, -22.2],
         zoom: 5.2,
         attributionControl: true,
@@ -128,28 +129,39 @@ export function FleetMap({ token, units, selectedTripId, onSelect }: {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !loaded) return;
+    const mapboxgl = mapboxRef.current;
+    if (!map || !mapboxgl || !loaded) return;
     let cancelled = false;
-    const selected = units.find((unit) => unit.tripId === selectedTripId);
     const source = map.getSource("active-route") as import("mapbox-gl").GeoJSONSource | undefined;
-    if (!selected || !source) {
+    if (!selectedRoutePoints || !source) {
       source?.setData({ type: "FeatureCollection", features: [] });
       checkpointMarkersRef.current.forEach((marker) => marker.remove());
       checkpointMarkersRef.current = [];
       return;
     }
 
-    const points = selected.routePoints.filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude) && !(point.latitude === 0 && point.longitude === 0));
+    const points = selectedRoutePoints.filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude) && !(point.latitude === 0 && point.longitude === 0));
     const coordinates = points.map((point) => `${point.longitude},${point.latitude}`).join(";");
     if (points.length >= 2) {
       void fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&overview=full&steps=false&access_token=${encodeURIComponent(token)}`)
         .then((response) => response.ok ? response.json() : null)
         .then((data: { routes?: { geometry?: { coordinates?: [number, number][] } }[] } | null) => {
-          if (cancelled || !data?.routes?.[0]?.geometry?.coordinates) return;
+          const routeCoordinates = data?.routes?.[0]?.geometry?.coordinates;
+          if (cancelled || !routeCoordinates?.length) return;
           source.setData({
             type: "Feature",
             properties: {},
-            geometry: { type: "LineString", coordinates: data.routes[0].geometry.coordinates },
+            geometry: { type: "LineString", coordinates: routeCoordinates },
+          });
+          const bounds = routeCoordinates.reduce(
+            (result, coordinate) => result.extend(coordinate),
+            new mapboxgl.LngLatBounds(routeCoordinates[0], routeCoordinates[0]),
+          );
+          const narrow = map.getContainer().clientWidth < 640;
+          map.fitBounds(bounds, {
+            padding: { top: 92, right: narrow ? 32 : 390, bottom: 40, left: narrow ? 24 : 310 },
+            maxZoom: 8,
+            duration: 450,
           });
         })
         .catch(() => source.setData({ type: "FeatureCollection", features: [] }));
@@ -175,8 +187,8 @@ export function FleetMap({ token, units, selectedTripId, onSelect }: {
     });
 
     return () => { cancelled = true; };
-  }, [units, selectedTripId, loaded, token]);
+  }, [selectedRoutePoints, selectedTripId, loaded, token]);
 
-  if (!token) return <div className="grid h-full min-h-96 place-items-center bg-canvas text-sm text-muted">Mapbox access token is not configured.</div>;
-  return <div ref={containerRef} className="h-full min-h-96 w-full" />;
+  if (!token) return <div className="absolute inset-0 grid place-items-center bg-[#f3f5f6] text-sm text-muted">Mapbox access token is not configured.</div>;
+  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
 }

@@ -2,6 +2,7 @@ import { requireProfile } from "@/lib/auth/session";
 import { getDashboard } from "@/lib/server/admin-service";
 import { formatUsd } from "@/lib/format";
 import { vehicleLabel } from "@/lib/domain/labels";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
 export default async function DashboardPage() {
   const profile = await requireProfile(["super_admin", "admin"]);
@@ -54,20 +55,21 @@ export default async function DashboardPage() {
         <Stat label="Upcoming Arrivals" value={String(data.upcoming)} />
         <Stat label="Alerts" value={String(data.alerts)} />
       </section>
-      <section className="mt-4 overflow-hidden rounded-3xl bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-canvas text-muted"><tr><th className="px-4 py-3">Vehicle</th><th>Registration</th><th>Route</th><th>Status</th></tr></thead>
-          <tbody>
-            {data.vehicles.map((vehicle) => (
-              <tr key={vehicle.id} className="border-t border-line">
-                <td className="px-4 py-3 font-medium">{vehicle.make} {vehicle.model}</td>
-                <td>{vehicle.registration}</td>
-                <td>{vehicle.origin} → {vehicle.destination}</td>
-                <td>{vehicleLabel(vehicle.status)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section className="mt-4">
+        <AdminDataTable
+          headings={["Vehicle", "Registration", "Route", "Status"]}
+          rows={data.vehicles.map((vehicle) => <tr key={vehicle.id} className="border-t border-line hover:bg-canvas/50">
+            <td className="px-3 py-2.5 font-medium">{vehicle.make} {vehicle.model}</td>
+            <td className="px-3 py-2.5">{vehicle.registration}</td>
+            <td className="px-3 py-2.5">{vehicle.origin} → {vehicle.destination}</td>
+            <td className="px-3 py-2.5">{vehicleLabel(vehicle.status)}</td>
+          </tr>)}
+          searchValues={data.vehicles.map((vehicle) => `${vehicle.make} ${vehicle.model} ${vehicle.registration} ${vehicle.origin} ${vehicle.destination}`)}
+          filterValues={data.vehicles.map((vehicle) => vehicle.status)}
+          filterLabel="Status"
+          filters={Array.from(new Set(data.vehicles.map((vehicle) => vehicle.status))).map((status) => ({ value: status, label: status.replaceAll("_", " ") }))}
+          emptyMessage="No vehicles found."
+        />
       </section>
     </div>
   );

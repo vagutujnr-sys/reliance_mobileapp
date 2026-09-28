@@ -25,6 +25,7 @@ const items = [
 export function AdminShell({ name, children }: { name: string; children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const fullBleedMap = pathname === "/admin/live";
   const nav = (
     <div className="flex h-full flex-col bg-ink text-white">
       <div className="flex items-center gap-3 px-5 py-5">
@@ -56,9 +57,9 @@ export function AdminShell({ name, children }: { name: string; children: React.R
     <div className="h-dvh overflow-hidden bg-canvas">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[250px] lg:block">{nav}</aside>
       {open ? <div className="fixed inset-0 z-40 lg:hidden"><button aria-label="Close navigation" className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} /><div className="relative h-full w-[250px]">{nav}</div></div> : null}
-      <main className="h-dvh overflow-y-auto lg:ml-[250px]">
-        <button type="button" aria-label="Open navigation" className="m-3 grid h-10 w-10 place-items-center rounded border border-line bg-white lg:hidden" onClick={() => setOpen(true)}>{open ? <X /> : <Menu />}</button>
-        <div className="px-4 pb-10 lg:px-8 lg:py-6">{children}</div>
+      <main className={`relative h-dvh lg:ml-[250px] ${fullBleedMap ? "overflow-hidden" : "overflow-y-auto"}`}>
+        <button type="button" aria-label="Open navigation" className={fullBleedMap ? "absolute left-3 top-3 z-50 grid h-10 w-10 place-items-center border border-line bg-white shadow-sm lg:hidden" : "m-3 grid h-10 w-10 place-items-center rounded border border-line bg-white lg:hidden"} onClick={() => setOpen(true)}>{open ? <X /> : <Menu />}</button>
+        <div className={fullBleedMap ? "h-full" : "px-4 pb-10 lg:px-8 lg:py-6"}>{children}</div>
       </main>
     </div>
   );
